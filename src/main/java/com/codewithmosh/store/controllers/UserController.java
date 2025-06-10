@@ -72,13 +72,13 @@ public class UserController {
     @PutMapping("/{id}")
     public ResponseEntity<UserDto> updateUser(
             @PathVariable(name = "id") Long id,
-            @RequestBody UpdateUserRequset requset
+            @RequestBody UpdateUserRequset request
     ) {
         User foundUser = userRepository.findById(id).orElse(null);
         if (foundUser == null) {
             return ResponseEntity.notFound().build();
         }
-        userMapper.update(requset, foundUser);
+        userMapper.update(request, foundUser);
         userRepository.save(foundUser);
 
         return ResponseEntity.ok(userMapper.toDto(foundUser));

@@ -1,16 +1,16 @@
 package com.codewithmosh.store.dtos.product;
 
-import lombok.Value;
+import lombok.Data;
 
 import java.math.BigDecimal;
 
-@Value
+@Data
 public class ProductDto {
 
-    Long id;
-    String name;
-    String description;
-    BigDecimal price;
-    Byte categoryId;
+    private Long id;
+    private String name;
+    private String description;
+    private BigDecimal price;
+    private Byte categoryId;
 
 }
