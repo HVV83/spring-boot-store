@@ -3,12 +3,14 @@ package com.codewithmosh.store.controllers;
 import com.codewithmosh.store.dtos.cart.AddItemToCartRequest;
 import com.codewithmosh.store.dtos.cart.CartDto;
 import com.codewithmosh.store.dtos.cart.CartItemDto;
+import com.codewithmosh.store.dtos.cart.UpdateCartItemRequest;
 import com.codewithmosh.store.entities.Cart;
 import com.codewithmosh.store.entities.CartItem;
 import com.codewithmosh.store.entities.Product;
 import com.codewithmosh.store.mappers.CartMapper;
 import com.codewithmosh.store.repositories.CartRepository;
 import com.codewithmosh.store.repositories.ProductRepository;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.util.Map;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -86,6 +89,37 @@ public class CartController {
         }
 
         return ResponseEntity.ok(cartMapper.toDto(cart));
+    }
+
+    @PutMapping("/{cartId}/items/{productId}")
+    public ResponseEntity<?> updateItem(
+            @PathVariable("cartId") UUID cartId,
+            @PathVariable("productId") Long productId,
+            @Valid @RequestBody UpdateCartItemRequest request
+    ) {
+        Cart cart = cartRepository.getCartWithItems(cartId).orElse(null);
+        if (cart == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    Map.of("error", "Cart not found")
+            );
+        }
+
+        CartItem cartItem = cart.getItems().stream()
+                .filter(item -> item.getProduct().getId().equals(productId))
+                .findFirst()
+                .orElse(null);
+
+        if (cartItem == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    Map.of("error", "Product was not found in the cart")
+            );
+        }
+
+        cartItem.setQuantity(request.getQuantity());
+        cartRepository.save(cart);
+
+        return ResponseEntity.ok(cartMapper.toDto(cartItem));
+
     }
 
 }
