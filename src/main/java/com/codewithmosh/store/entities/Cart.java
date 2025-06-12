@@ -61,4 +61,9 @@ public class Cart {
         }
     }
 
+    public void clear() {
+        items.forEach(item -> item.setCart(null));
+        items.clear();
+    }
+
 }
