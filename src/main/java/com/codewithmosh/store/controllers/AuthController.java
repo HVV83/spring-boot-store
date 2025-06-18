@@ -2,6 +2,10 @@ package com.codewithmosh.store.controllers;
 
 import com.codewithmosh.store.dtos.auth.JwtResponse;
 import com.codewithmosh.store.dtos.auth.LoginRequest;
+import com.codewithmosh.store.dtos.user.UserDto;
+import com.codewithmosh.store.entities.User;
+import com.codewithmosh.store.mappers.CartMapper;
+import com.codewithmosh.store.mappers.UserMapper;
 import com.codewithmosh.store.repositories.UserRepository;
 import com.codewithmosh.store.services.JwtService;
 import jakarta.validation.Valid;
@@ -11,7 +15,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
@@ -21,6 +26,8 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
     @PostMapping("/login")
     public ResponseEntity<JwtResponse> login(
@@ -41,6 +48,20 @@ public class AuthController {
         String token = authToken.replace("Bearer ", "");
 
         return jwtService.validateToken(token);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserDto> me() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = (String) authentication.getPrincipal();
+
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null) {
+            return ResponseEntity.notFound().build();
+        }
+        UserDto userDto = userMapper.toDto(user);
+
+        return ResponseEntity.ok(userDto);
     }
 
     @ExceptionHandler(BadCredentialsException.class)
