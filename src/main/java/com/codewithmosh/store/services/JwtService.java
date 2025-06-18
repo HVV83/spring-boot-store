@@ -29,16 +29,24 @@ public class JwtService {
 
     public boolean validateToken(String token) {
         try {
-            Claims claims = Jwts.parser()
-                    .verifyWith(Keys.hmacShaKeyFor(secret.getBytes()))
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
+            Claims claims = getClaims(token);
 
             return claims.getExpiration().after(new Date());
-        } catch (JwtException | IllegalArgumentException e) {
+        } catch (JwtException | IllegalArgumentException ex) {
             return false;
         }
+    }
+
+    private Claims getClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(Keys.hmacShaKeyFor(secret.getBytes()))
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
+    public String getEmailFromToken(String token) {
+        return getClaims(token).getSubject();
     }
 
 }
