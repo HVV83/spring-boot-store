@@ -4,7 +4,6 @@ import com.codewithmosh.store.dtos.auth.JwtResponse;
 import com.codewithmosh.store.dtos.auth.LoginRequest;
 import com.codewithmosh.store.dtos.user.UserDto;
 import com.codewithmosh.store.entities.User;
-import com.codewithmosh.store.mappers.CartMapper;
 import com.codewithmosh.store.mappers.UserMapper;
 import com.codewithmosh.store.repositories.UserRepository;
 import com.codewithmosh.store.services.JwtService;
@@ -38,7 +37,8 @@ public class AuthController {
                         request.getEmail(),
                         request.getPassword()));
 
-        String token = jwtService.generateToken(request.getEmail());
+        User user = userRepository.findByEmail(request.getEmail()).orElseThrow();
+        String token = jwtService.generateToken(user);
 
         return ResponseEntity.ok(new JwtResponse(token));
     }
@@ -53,9 +53,9 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<UserDto> me() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = (String) authentication.getPrincipal();
+        Long userId = (Long) authentication.getPrincipal();
 
-        User user = userRepository.findByEmail(email).orElse(null);
+        User user = userRepository.findById(userId).orElse(null);
         if (user == null) {
             return ResponseEntity.notFound().build();
         }
