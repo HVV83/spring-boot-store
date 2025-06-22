@@ -1,7 +1,7 @@
 package com.codewithmosh.store.filters;
 
-import com.codewithmosh.store.entities.Role;
 import com.codewithmosh.store.services.JwtService;
+import com.codewithmosh.store.services.Jwt;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,17 +32,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String token = authHeader.replace("Bearer ", "");
-        if (!jwtService.validateToken(token)) {
+        Jwt jwt = jwtService.parseToken(token);
+        if (jwt == null || jwt.isExpired()) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        Long userId = jwtService.getUserIdFromToken(token);
-        Role userRole = jwtService.getRoleFromToken(token);
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                userId,
+                jwt.getUserId(),
                 null,
-                List.of(new SimpleGrantedAuthority("ROLE_" + userRole))
+                List.of(new SimpleGrantedAuthority("ROLE_" + jwt.getRole()))
         );
 
         authentication.setDetails(

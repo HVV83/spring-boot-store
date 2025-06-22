@@ -8,6 +8,7 @@ import com.codewithmosh.store.entities.User;
 import com.codewithmosh.store.mappers.UserMapper;
 import com.codewithmosh.store.repositories.UserRepository;
 import com.codewithmosh.store.services.JwtService;
+import com.codewithmosh.store.services.Jwt;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -43,32 +44,33 @@ public class AuthController {
                         request.getPassword()));
 
         User user = userRepository.findByEmail(request.getEmail()).orElseThrow();
-        String accessToken = jwtService.generateAccessToken(user);
-        String refreshToken = jwtService.generateRefreshToken(user);
 
-        Cookie cookie = new Cookie("refreshToken", refreshToken);
+        Jwt accessToken = jwtService.generateAccessToken(user);
+        Jwt refreshToken = jwtService.generateRefreshToken(user);
+
+        Cookie cookie = new Cookie("refreshToken", refreshToken.toString());
         cookie.setHttpOnly(true);
         cookie.setPath("/auth");
         cookie.setMaxAge(jwtConfig.getRefreshTokenExpiration());
         cookie.setSecure(true);
         response.addCookie(cookie);
 
-        return ResponseEntity.ok(new JwtResponse(accessToken));
+        return ResponseEntity.ok(new JwtResponse(accessToken.toString()));
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<JwtResponse> refresh(
             @CookieValue(value = "refreshToken") String refreshToken
     ) {
-        if (!jwtService.validateToken(refreshToken)) {
+        Jwt jwt = jwtService.parseToken(refreshToken);
+        if (jwt == null || jwt.isExpired()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        Long userId = jwtService.getUserIdFromToken(refreshToken);
-        User user = userRepository.findById(userId).orElseThrow();
-        String accessToken = jwtService.generateAccessToken(user);
+        User user = userRepository.findById(jwt.getUserId()).orElseThrow();
+        Jwt accessToken = jwtService.generateAccessToken(user);
 
-        return ResponseEntity.ok(new JwtResponse(accessToken));
+        return ResponseEntity.ok(new JwtResponse(accessToken.toString()));
     }
 
     @GetMapping("/me")
