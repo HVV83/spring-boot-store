@@ -12,6 +12,8 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import static com.codewithmosh.store.entities.OrderStatus.PENDING;
+
 @Getter
 @Setter
 @Entity
@@ -38,5 +40,19 @@ public class Order {
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.PERSIST)
     private Set<OrderItem> items = new LinkedHashSet<>();
+
+    public static Order fromCart(Cart cart, User customer) {
+        Order order = new Order();
+        order.setCustomer(customer);
+        order.setStatus(PENDING);
+        order.setTotalPrice(cart.getTotalPrice());
+
+        cart.getItems().forEach(item -> {
+            OrderItem orderItem = new OrderItem(order, item.getProduct(), item.getQuantity());
+            order.items.add(orderItem);
+        });
+
+        return order;
+    }
 
 }
