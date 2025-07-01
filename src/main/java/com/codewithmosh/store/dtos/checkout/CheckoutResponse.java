@@ -1,12 +1,16 @@
 package com.codewithmosh.store.dtos.checkout;
 
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 
-@RequiredArgsConstructor
 @Data
 public class CheckoutResponse {
 
     private final Long orderId;
+    private final String checkoutUrl;
+
+    public CheckoutResponse(Long orderId, String checkoutUrl) {
+        this.orderId = orderId;
+        this.checkoutUrl = checkoutUrl;
+    }
 
 }
